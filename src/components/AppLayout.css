@@ -1,0 +1,44 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-layout__main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 32px 60px;
+}
+
+.app-layout__menu-btn {
+  display: none;
+}
+
+.app-layout__scrim {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .app-layout__main {
+    padding: 20px 16px 48px;
+  }
+
+  .app-layout__menu-btn {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-forest-700);
+    margin-bottom: 16px;
+  }
+
+  .app-layout__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 38, 29, 0.35);
+    z-index: 30;
+  }
+}

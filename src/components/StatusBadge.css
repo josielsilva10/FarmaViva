@@ -1,0 +1,38 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.status-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge--verde {
+  background: var(--color-green-bg);
+  color: var(--color-green);
+  border-color: var(--color-green-border);
+}
+
+.status-badge--amarelo {
+  background: var(--color-amber-bg);
+  color: var(--color-amber);
+  border-color: var(--color-amber-border);
+}
+
+.status-badge--vermelho {
+  background: var(--color-red-bg);
+  color: var(--color-red);
+  border-color: var(--color-red-border);
+}

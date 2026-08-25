@@ -1,0 +1,25 @@
+.cadastro-form {
+  padding: 24px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+}
+
+.cadastro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.cadastro-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (max-width: 620px) {
+  .cadastro-grid {
+    grid-template-columns: 1fr;
+  }
+}

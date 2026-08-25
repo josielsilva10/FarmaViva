@@ -1,0 +1,71 @@
+.estoque-card {
+  padding: 18px 20px 8px;
+}
+
+.estoque-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.estoque-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--color-text-faint);
+  flex: 1;
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.estoque-search__input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--color-text);
+  width: 100%;
+}
+
+.estoque-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 6px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.chip:hover {
+  background: var(--color-bg-alt);
+}
+
+.chip--active {
+  background: var(--color-forest-700);
+  border-color: var(--color-forest-700);
+  color: #fff;
+}
+
+.estoque-muted {
+  color: var(--color-text-muted);
+}
+
+.estoque-card__loading {
+  color: var(--color-text-muted);
+  padding: 24px 4px;
+}

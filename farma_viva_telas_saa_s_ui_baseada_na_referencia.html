@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>FarmaViva SaaS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: radial-gradient(circle at top, #0d2b3f, #050b12);
+      color: #e6f1f8;
+    }
+    .glass {
+      background: rgba(20, 40, 60, 0.55);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(120,180,220,0.25);
+      border-radius: 18px;
+      box-shadow: 0 0 40px rgba(0,150,255,0.15);
+    }
+    header {
+      padding: 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric {
+      padding: 18px;
+      text-align: center;
+    }
+    .metric h3 { margin: 0; font-size: 28px; }
+    .metric span { opacity: 0.85; }
+
+    .lists {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .list {
+      padding: 16px;
+    }
+    .list h4 { margin-top: 0; }
+    .item {
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .green { background: rgba(40,160,90,0.35); }
+    .yellow { background: rgba(200,160,40,0.35); }
+    .red { background: rgba(200,60,60,0.4); }
+
+    .form-card {
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 24px;
+    }
+    .form-card h2 { text-align: center; }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #e6f1f8;
+    }
+    input::placeholder { color: #b6c8d6; }
+    button {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+
+    .footer-btn {
+      margin-top: 14px;
+      background: transparent;
+      border: 1px solid rgba(120,180,220,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<header class="glass">FarmaViva – Gestão Proativa de Validade</header>
+
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <section class="metrics">
+    <div class="metric glass"><h3>R$ 1,2M</h3><span>Valor Total em Estoque</span></div>
+    <div class="metric glass"><h3>47</h3><span>Itens em Alerta Vermelho</span></div>
+    <div class="metric glass"><h3>+52%</h3><span>Redução de Desperdício</span></div>
+  </section>
+
+  <section class="lists">
+    <div class="list glass">
+      <h4>Seguro (+6 meses)</h4>
+      <div class="item green">Amoxicilina 500mg – 2500 un</div>
+      <div class="item green">Ibuprofeno 200mg – 1800 un</div>
+    </div>
+    <div class="list glass">
+      <h4>Próximo (3–6 meses)</h4>
+      <div class="item yellow">Ibuprofeno 400mg – 800 un</div>
+    </div>
+    <div class="list glass">
+      <h4>Crítico (&lt;3 meses)</h4>
+      <div class="item red">Insulina Glargina – 12 un</div>
+    </div>
+  </section>
+
+  <!-- CADASTRO -->
+  <section class="form-card glass">
+    <h2>Cadastro de Produto</h2>
+    <input placeholder="Nome do Produto" />
+    <input placeholder="Código de Barras" />
+    <select><option>Categoria</option></select>
+    <input type="date" />
+    <input placeholder="Lote" />
+    <input type="number" placeholder="Quantidade em Estoque" />
+    <input type="number" placeholder="Preço Unitário" />
+    <button>Cadastrar Produto</button>
+    <button class="footer-btn">Cancelar</button>
+  </section>
+
+</div>
+
+</body>
+</html>

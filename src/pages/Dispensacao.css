@@ -1,0 +1,128 @@
+.dispensacao-select-med {
+  max-width: 340px;
+  margin-bottom: 20px;
+}
+
+.dispensacao-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.dispensacao-lotes,
+.dispensacao-confirm {
+  padding: 20px;
+}
+
+.dispensacao-lotes__title {
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+.dispensacao-lotes__loading {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.lote-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lote-option {
+  width: 100%;
+  text-align: left;
+  background: var(--color-bg-alt);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.lote-option:hover {
+  border-color: var(--color-forest-400);
+}
+
+.lote-option--selected {
+  border-color: var(--color-forest-600);
+  background: var(--color-mint-100);
+}
+
+.lote-option--disabled {
+  opacity: 0.75;
+}
+
+.lote-option__top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.lote-option__tag {
+  background: var(--color-forest-600);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.lote-option__code {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--color-forest-900);
+}
+
+.lote-option__days {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+}
+
+.lote-option__days--verde {
+  color: var(--color-green);
+  background: var(--color-green-bg);
+}
+.lote-option__days--amarelo {
+  color: var(--color-amber);
+  background: var(--color-amber-bg);
+}
+.lote-option__days--vermelho,
+.lote-option__days--expirado {
+  color: var(--color-red);
+  background: var(--color-red-bg);
+}
+
+.lote-option__meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.dispensacao-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
+}
+
+@media (max-width: 900px) {
+  .dispensacao-grid {
+    grid-template-columns: 1fr;
+  }
+  .dispensacao-confirm {
+    position: static;
+  }
+}
