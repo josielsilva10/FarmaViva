@@ -26,10 +26,11 @@ A API define CORS configurável por ambiente, autenticação obrigatória nas ro
 O GitHub já continha o repositório do grupo **FarmaViva**; foi reaproveitado para evitar um repositório duplicado. O código da API fica em `api/`, ao lado da UI React já existente. Isso preserva o histórico e permite evoluir UI e API no mesmo projeto.
 
 - Remoto existente: [https://github.com/josielsilva10/FarmaViva](https://github.com/josielsilva10/FarmaViva)
-- Branch de trabalho: `feat/api-ui-sprint-2`
+- Branch local de trabalho: `feat/api-ui-sprint-2` (commit `9979609` mais commit de documentação)
 - Branch principal original: `main`
 - A integração local da UI com a API usa `src/services/api.js` e o proxy `/api` do Vite para `http://localhost:8000`.
 - O `.gitignore` da API exclui `.env`, banco SQLite, ambiente virtual e caches; não se versionam segredos nem dados locais.
+- A publicação da branch no GitHub foi recusada com HTTP 403 por falta de permissão de escrita na credencial disponível; o remoto não foi alterado e `main` não foi mesclada. Com permissão de escrita, publique com `git push -u origin feat/api-ui-sprint-2`.
 
 ## 3. Implementação das tarefas do projeto API — Sprint 2
 

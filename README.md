@@ -21,7 +21,7 @@ SQLite foi escolhido para permitir executar o MVP localmente sem serviço adicio
 
 ## Repositório e versão
 
-O repositório remoto já existente do grupo foi reaproveitado: [github.com/josielsilva10/FarmaViva](https://github.com/josielsilva10/FarmaViva). O trabalho desta entrega está na branch `feat/api-ui-sprint-2`; a integração front/back ocorre dentro do mesmo repositório, sem duplicar o projeto remoto.
+O repositório remoto já existente do grupo foi reaproveitado: [github.com/josielsilva10/FarmaViva](https://github.com/josielsilva10/FarmaViva). O trabalho foi versionado localmente na branch `feat/api-ui-sprint-2` (commit `9979609` e commit de documentação subsequente); a integração front/back ocorre dentro do mesmo projeto, sem duplicar o repositório. A tentativa de publicar a branch foi recusada pelo GitHub com HTTP 403 (permissão de escrita indisponível na credencial desta sessão); nenhuma alteração foi mesclada em `main`. Para publicar, a conta/credencial precisa de acesso de escrita a esse repositório.
 
 ## Executar localmente
 
