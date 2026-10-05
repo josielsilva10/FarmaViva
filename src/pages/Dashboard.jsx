@@ -12,14 +12,21 @@ import "./Dashboard.css";
 export default function Dashboard() {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
   const [toast, setToast] = useState(null);
 
   async function carregar() {
     setCarregando(true);
-    const resultado = await getDashboardAlertas();
-    setDados(resultado);
-    setCarregando(false);
+    setErro("");
+    try {
+      const resultado = await getDashboardAlertas();
+      setDados(resultado);
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
+    }
   }
 
   useEffect(() => {
@@ -39,8 +46,15 @@ export default function Dashboard() {
         }
       />
 
-      {carregando || !dados ? (
+      {carregando ? (
         <p className="dashboard__loading">Carregando painel...</p>
+      ) : erro ? (
+        <div className="empty-state" role="alert">
+          <p>{erro}</p>
+          <button className="btn btn-secondary" onClick={carregar}>Tentar novamente</button>
+        </div>
+      ) : !dados ? (
+        <p className="dashboard__loading">Nenhum dado disponível.</p>
       ) : (
         <>
           <div className="kpi-grid">
@@ -157,6 +171,7 @@ function ThresholdModal({ open, thresholds, onClose, onSaved }) {
   const [amarelo, setAmarelo] = useState(thresholds?.diasAlertaAmarelo ?? 60);
   const [vermelho, setVermelho] = useState(thresholds?.diasAlertaVermelho ?? 15);
   const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState("");
 
   useEffect(() => {
     if (open && thresholds) {
@@ -170,9 +185,15 @@ function ThresholdModal({ open, thresholds, onClose, onSaved }) {
   async function salvar() {
     if (invalido) return;
     setSalvando(true);
-    await atualizarThresholds({ diasAlertaAmarelo: amarelo, diasAlertaVermelho: vermelho });
-    setSalvando(false);
-    onSaved("Thresholds atualizados e aplicados imediatamente.");
+    setErroSalvar("");
+    try {
+      await atualizarThresholds({ diasAlertaAmarelo: Number(amarelo), diasAlertaVermelho: Number(vermelho) });
+      onSaved("Thresholds atualizados e aplicados imediatamente.");
+    } catch (error) {
+      setErroSalvar(error.message);
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -216,6 +237,7 @@ function ThresholdModal({ open, thresholds, onClose, onSaved }) {
           />
         </div>
         {invalido && <p className="field__error">O limiar vermelho deve ser menor que o amarelo.</p>}
+        {erroSalvar && <p className="field__error" role="alert">{erroSalvar}</p>}
       </div>
     </Modal>
   );

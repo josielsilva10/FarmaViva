@@ -1,303 +1,147 @@
-// ---------------------------------------------------------------------------
-// Camada de API mockada (Sprint 1 — Front-end com dados simulados).
-//
-// Quando o back-end real (US10 · RF10) estiver pronto, troque apenas as
-// implementações abaixo por chamadas `fetch("/api/...")`. As páginas usam
-// somente as funções exportadas aqui, então nenhum componente precisa mudar.
-//
-// Exemplo de migração futura:
-//   export async function getMedicamentos() {
-//     const res = await fetch("/api/medicamentos");
-//     if (!res.ok) throw new Error("Falha ao carregar medicamentos");
-//     return res.json();
-//   }
-// ---------------------------------------------------------------------------
+const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+const TOKEN_KEY = "farmaviva_access_token_v1";
+const USER_KEY = "farmaviva_user_v1";
 
-import {
-  medicamentosIniciais,
-  thresholdConfigInicial,
-  usuarioAtual,
-  logAuditoriaInicial,
-  movimentacoesIniciais,
-} from "../data/mockData";
-import { calcularStatus, diasParaVencer, STATUS } from "../utils/validade";
-
-const STORAGE_KEY = "farmaviva_mock_db_v1";
-const LATENCY_MS = 260;
-
-function seedDb() {
-  return {
-    medicamentos: structuredClone(medicamentosIniciais),
-    thresholds: structuredClone(thresholdConfigInicial),
-    logAuditoria: structuredClone(logAuditoriaInicial),
-    movimentacoes: structuredClone(movimentacoesIniciais),
-  };
-}
-
-function loadDb() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedDb();
-    const parsed = JSON.parse(raw);
-    if (!parsed.medicamentos || !parsed.thresholds) return seedDb();
-    return parsed;
-  } catch {
-    return seedDb();
+export class ApiError extends Error {
+  constructor(message, statusCode = 0) {
+    super(message);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
   }
 }
 
-function saveDb(db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+export function getAccessToken() {
+  return typeof window === "undefined" ? null : window.sessionStorage.getItem(TOKEN_KEY);
 }
 
-let db = loadDb();
-
-function delay(value) {
-  return new Promise((resolve) => setTimeout(() => resolve(value), LATENCY_MS));
+function setSession(token, user) {
+  window.sessionStorage.setItem(TOKEN_KEY, token);
+  window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-function uid(prefix) {
-  return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-}
-
-function registrarLog(acao, usuario = usuarioAtual.nome) {
-  db.logAuditoria.unshift({
-    id: uid("log_"),
-    dataHora: new Date().toISOString(),
-    usuario,
-    acao,
-  });
-}
-
-// ----------------------------- Autenticação --------------------------------
-
-export async function autenticar(email, senha) {
-  // Protótipo navegável: qualquer combinação preenchida autentica (RF10 exigirá validação real).
-  if (!email || !senha) {
-    return delay({ ok: false, message: "Informe e-mail e senha." });
-  }
-  return delay({ ok: true, usuario: usuarioAtual });
+export function encerrarSessao() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(TOKEN_KEY);
+  window.sessionStorage.removeItem(USER_KEY);
 }
 
 export function getUsuarioAtual() {
-  return usuarioAtual;
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
-// ----------------------------- Medicamentos ---------------------------------
+async function request(path, { method = "GET", body, auth = true } = {}) {
+  const headers = { Accept: "application/json" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const token = auth ? getAccessToken() : null;
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+  } catch {
+    throw new ApiError("Não foi possível conectar à API. Verifique se o serviço está em execução e tente novamente.");
+  }
+  const text = await response.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); } catch { data = { detail: text }; }
+  }
+  if (!response.ok) {
+    if (response.status === 401 && auth) encerrarSessao();
+    const detail = data?.detail;
+    const message = Array.isArray(detail) ? detail.map((item) => item.msg).join("; ") : detail;
+    throw new ApiError(message || "Ocorreu um erro ao comunicar com a API.", response.status);
+  }
+  return data;
+}
+
+export async function autenticar(email, senha) {
+  try {
+    const result = await request("/auth/login", { method: "POST", body: { email, senha }, auth: false });
+    setSession(result.access_token, result.usuario);
+    return { ok: true, usuario: result.usuario };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+}
+
+export async function validarSessao() {
+  const token = getAccessToken();
+  if (!token) return null;
+  try {
+    const user = await request("/auth/me");
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    return user;
+  } catch {
+    encerrarSessao();
+    return null;
+  }
+}
 
 export async function getMedicamentos() {
-  return delay(structuredClone(db.medicamentos));
+  return request("/medicamentos");
 }
 
 export async function getMedicamentoById(id) {
-  const med = db.medicamentos.find((m) => m.id === id);
-  return delay(med ? structuredClone(med) : null);
+  return request(`/medicamentos/${encodeURIComponent(id)}`);
 }
 
 export async function criarMedicamento(payload) {
-  const novo = {
-    id: uid("m"),
-    nome: payload.nome,
-    principioAtivo: payload.principioAtivo,
-    descricao: payload.descricao || "",
-    dataCadastro: new Date().toISOString().slice(0, 10),
-    lotes: [
-      {
-        id: uid("l"),
-        numeroLote: payload.numeroLote,
-        dataFabricacao: payload.dataFabricacao,
-        dataValidade: payload.dataValidade,
-        quantidade: Number(payload.quantidade) || 0,
-      },
-    ],
-  };
-  db.medicamentos.unshift(novo);
-  registrarLog(`Cadastrou o medicamento "${novo.nome}" (lote ${novo.lotes[0].numeroLote}).`);
-  saveDb(db);
-  return delay(structuredClone(novo));
+  return request("/medicamentos", { method: "POST", body: payload });
 }
 
 export async function atualizarMedicamento(id, payload) {
-  const med = db.medicamentos.find((m) => m.id === id);
-  if (!med) return delay({ ok: false });
-  Object.assign(med, payload);
-  registrarLog(`Atualizou o cadastro do medicamento "${med.nome}".`);
-  saveDb(db);
-  return delay({ ok: true, medicamento: structuredClone(med) });
+  return request(`/medicamentos/${encodeURIComponent(id)}`, { method: "PATCH", body: payload });
 }
 
 export async function excluirMedicamento(id) {
-  const med = db.medicamentos.find((m) => m.id === id);
-  db.medicamentos = db.medicamentos.filter((m) => m.id !== id);
-  if (med) registrarLog(`Excluiu o medicamento "${med.nome}".`);
-  saveDb(db);
-  return delay({ ok: true });
+  return request(`/medicamentos/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-// -------------------------------- Estoque -----------------------------------
-
-/** Lista achatada de lotes com status calculado — usada no Estoque e no Dashboard. */
 export async function getLotesComStatus({ busca = "", statusFiltro = null } = {}) {
-  const thresholds = db.thresholds;
-  let linhas = db.medicamentos.flatMap((med) =>
-    med.lotes.map((lote) => ({
-      medicamentoId: med.id,
-      medicamentoNome: med.nome,
-      principioAtivo: med.principioAtivo,
-      ...lote,
-      status: calcularStatus(lote.dataValidade, thresholds),
-      diasRestantes: diasParaVencer(lote.dataValidade),
-    }))
-  );
-
-  if (busca.trim()) {
-    const termo = busca.trim().toLowerCase();
-    linhas = linhas.filter(
-      (l) => l.medicamentoNome.toLowerCase().includes(termo) || l.principioAtivo.toLowerCase().includes(termo)
-    );
-  }
-  if (statusFiltro) {
-    linhas = linhas.filter((l) => l.status === statusFiltro);
-  }
-
-  linhas.sort((a, b) => a.diasRestantes - b.diasRestantes);
-  return delay(linhas);
+  const params = new URLSearchParams();
+  if (busca.trim()) params.set("busca", busca.trim());
+  if (statusFiltro) params.set("status", statusFiltro);
+  const suffix = params.size ? `?${params.toString()}` : "";
+  return request(`/lotes${suffix}`);
 }
 
-/** Lotes de um medicamento específico, já ordenados por FEFO (validade crescente). */
 export async function getLotesPorMedicamentoFEFO(medicamentoId) {
-  const med = db.medicamentos.find((m) => m.id === medicamentoId);
-  if (!med) return delay([]);
-  const thresholds = db.thresholds;
-  const lotes = [...med.lotes]
-    .sort((a, b) => new Date(a.dataValidade) - new Date(b.dataValidade))
-    .map((lote) => ({
-      ...lote,
-      status: calcularStatus(lote.dataValidade, thresholds),
-      diasRestantes: diasParaVencer(lote.dataValidade),
-    }));
-  return delay(lotes);
+  return request(`/medicamentos/${encodeURIComponent(medicamentoId)}/lotes`);
 }
-
-// ------------------------------ Thresholds ----------------------------------
 
 export async function getThresholds() {
-  return delay(structuredClone(db.thresholds));
+  return request("/config/thresholds");
 }
 
 export async function atualizarThresholds(payload) {
-  db.thresholds = {
-    diasAlertaAmarelo: Number(payload.diasAlertaAmarelo),
-    diasAlertaVermelho: Number(payload.diasAlertaVermelho),
-  };
-  registrarLog(
-    `Ajustou os thresholds de alerta (amarelo: ${db.thresholds.diasAlertaAmarelo}d, vermelho: ${db.thresholds.diasAlertaVermelho}d).`
-  );
-  saveDb(db);
-  return delay(structuredClone(db.thresholds));
+  return request("/config/thresholds", { method: "PUT", body: payload });
 }
-
-// -------------------------------- Dashboard ---------------------------------
 
 export async function getDashboardAlertas() {
-  const thresholds = db.thresholds;
-  const lotes = db.medicamentos.flatMap((med) =>
-    med.lotes.map((lote) => ({
-      medicamentoId: med.id,
-      medicamentoNome: med.nome,
-      ...lote,
-      status: calcularStatus(lote.dataValidade, thresholds),
-      diasRestantes: diasParaVencer(lote.dataValidade),
-    }))
-  );
-
-  const totalUnidades = lotes.reduce((acc, l) => acc + l.quantidade, 0);
-  const porStatus = { VERDE: 0, AMARELO: 0, VERMELHO: 0, EXPIRADO: 0 };
-  lotes.forEach((l) => {
-    porStatus[l.status] += l.quantidade;
-  });
-
-  const criticos = porStatus.VERMELHO + porStatus.EXPIRADO;
-  const pct = (n) => (totalUnidades === 0 ? 0 : Math.round((n / totalUnidades) * 100));
-
-  const itensAtencao = lotes
-    .filter((l) => l.status === STATUS.VERMELHO || l.status === STATUS.AMARELO || l.status === STATUS.EXPIRADO)
-    .sort((a, b) => a.diasRestantes - b.diasRestantes)
-    .slice(0, 8);
-
-  return delay({
-    totalItens: totalUnidades,
-    totalMedicamentos: db.medicamentos.length,
-    pctVerde: pct(porStatus.VERDE),
-    pctAmarelo: pct(porStatus.AMARELO),
-    pctCritico: pct(criticos),
-    unidadesVerde: porStatus.VERDE,
-    unidadesAmarelo: porStatus.AMARELO,
-    unidadesCritico: criticos,
-    itensAtencao,
-    linhaTempo: [...lotes].sort((a, b) => a.diasRestantes - b.diasRestantes).slice(0, 7),
-    thresholds,
-  });
+  return request("/dashboard/alertas");
 }
 
-// ------------------------------ Dispensação ---------------------------------
-
-export async function registrarDispensacao({ medicamentoId, loteId, quantidade }) {
-  const med = db.medicamentos.find((m) => m.id === medicamentoId);
-  if (!med) return delay({ ok: false, erro: "Medicamento não encontrado." });
-
-  const lote = med.lotes.find((l) => l.id === loteId);
-  if (!lote) return delay({ ok: false, erro: "Lote inválido ou inexistente." });
-
-  const status = calcularStatus(lote.dataValidade, db.thresholds);
-  if (status === STATUS.EXPIRADO) {
-    registrarLog(`Tentativa bloqueada: dispensação do lote vencido ${lote.numeroLote} (${med.nome}).`);
-    saveDb(db);
-    return delay({ ok: false, erro: "Este lote está vencido. A dispensação foi bloqueada." });
-  }
-
-  const qtd = Number(quantidade);
-  if (!qtd || qtd <= 0) {
-    return delay({ ok: false, erro: "Informe uma quantidade válida." });
-  }
-  if (qtd > lote.quantidade) {
-    registrarLog(`Tentativa bloqueada: saída maior que o disponível no lote ${lote.numeroLote}.`);
-    saveDb(db);
-    return delay({ ok: false, erro: `Quantidade indisponível. Restam apenas ${lote.quantidade} unidades no lote.` });
-  }
-
-  lote.quantidade -= qtd;
-  db.movimentacoes.unshift({
-    id: uid("mov_"),
-    tipo: "SAIDA",
-    quantidade: qtd,
-    dataHora: new Date().toISOString(),
-    usuarioResponsavel: usuarioAtual.nome,
-    medicamentoNome: med.nome,
-    numeroLote: lote.numeroLote,
+export async function registrarDispensacao({ medicamentoId, loteId, quantidade, confirmacaoRisco = false }) {
+  return request("/dispensacoes", {
+    method: "POST",
+    body: { medicamentoId, loteId, quantidade, confirmacaoRisco },
   });
-  registrarLog(`Registrou saída de ${qtd} unidade(s) de ${med.nome} (lote ${lote.numeroLote}).`);
-  saveDb(db);
-
-  return delay({ ok: true, quantidadeRestante: lote.quantidade });
 }
-
-// ------------------------------ Relatórios / Log -----------------------------
 
 export async function getRelatorioProximosVencimento() {
-  const linhas = await getLotesComStatus();
-  return delay({
-    geradoEm: new Date().toISOString(),
-    itens: linhas.filter((l) => l.status !== STATUS.VERDE),
-  });
+  return request("/relatorios/proximos-vencimento");
 }
 
 export async function getLogAuditoria() {
-  return delay(structuredClone(db.logAuditoria));
-}
-
-export async function resetarDadosMock() {
-  db = seedDb();
-  saveDb(db);
-  return delay({ ok: true });
+  return request("/auditoria");
 }

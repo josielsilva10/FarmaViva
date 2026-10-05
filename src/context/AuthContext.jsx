@@ -1,32 +1,35 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { autenticar, getUsuarioAtual } from "../services/api";
+import { autenticar, encerrarSessao, getAccessToken, validarSessao } from "../services/api";
 
 const AuthContext = createContext(null);
-const SESSION_KEY = "farmaviva_session_v1";
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    const sessao = sessionStorage.getItem(SESSION_KEY);
-    if (sessao === "ativa") {
-      setUsuario(getUsuarioAtual());
+    let ativo = true;
+    if (!getAccessToken()) {
+      setCarregando(false);
+      return () => { ativo = false; };
     }
-    setCarregando(false);
+    validarSessao().then((user) => {
+      if (ativo) {
+        setUsuario(user);
+        setCarregando(false);
+      }
+    });
+    return () => { ativo = false; };
   }, []);
 
   async function login(email, senha) {
     const resultado = await autenticar(email, senha);
-    if (resultado.ok) {
-      sessionStorage.setItem(SESSION_KEY, "ativa");
-      setUsuario(resultado.usuario);
-    }
+    if (resultado.ok) setUsuario(resultado.usuario);
     return resultado;
   }
 
   function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
+    encerrarSessao();
     setUsuario(null);
   }
 

@@ -14,20 +14,27 @@ export default function Estoque() {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     setCarregando(true);
-    getLotesComStatus({ busca, statusFiltro }).then((res) => {
-      if (ativo) {
-        setLinhas(res);
-        setCarregando(false);
-      }
-    });
+    setErro("");
+    getLotesComStatus({ busca, statusFiltro })
+      .then((res) => {
+        if (ativo) setLinhas(res);
+      })
+      .catch((error) => {
+        if (ativo) setErro(error.message);
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false);
+      });
     return () => {
       ativo = false;
     };
-  }, [busca, statusFiltro]);
+  }, [busca, statusFiltro, tentativa]);
 
   return (
     <div>
@@ -68,6 +75,11 @@ export default function Estoque() {
 
         {carregando ? (
           <p className="estoque-card__loading">Carregando estoque...</p>
+        ) : erro ? (
+          <div className="empty-state" role="alert">
+            <p>{erro}</p>
+            <button className="btn btn-secondary" onClick={() => setTentativa((value) => value + 1)}>Tentar novamente</button>
+          </div>
         ) : linhas.length === 0 ? (
           <div className="empty-state">
             <span className="empty-state__icon">

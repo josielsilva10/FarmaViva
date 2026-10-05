@@ -21,6 +21,7 @@ export default function Cadastro() {
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [toast, setToast] = useState(null);
+  const [erroApi, setErroApi] = useState("");
 
   function set(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -46,10 +47,16 @@ export default function Cadastro() {
     ev.preventDefault();
     if (!validar()) return;
     setSalvando(true);
-    await criarMedicamento(form);
-    setSalvando(false);
-    setToast(`"${form.nome}" cadastrado com sucesso.`);
-    setForm(VAZIO);
+    setErroApi("");
+    try {
+      await criarMedicamento({ ...form, quantidade: Number(form.quantidade) });
+      setToast(`"${form.nome}" cadastrado com sucesso.`);
+      setForm(VAZIO);
+    } catch (error) {
+      setErroApi(error.message);
+    } finally {
+      setSalvando(false);
+    }
   }
 
   function cancelar() {
@@ -157,6 +164,8 @@ export default function Cadastro() {
             )}
           </div>
         </div>
+
+        {erroApi && <p className="field__error" role="alert">{erroApi}</p>}
 
         <div className="cadastro-actions">
           <button className="btn btn-primary" type="submit" disabled={salvando}>

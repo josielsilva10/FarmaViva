@@ -1,85 +1,89 @@
-# FarmaViva — Front-end (Sprint 1)
+# FarmaViva — Gestão Proativa de Validade de Medicamentos
 
-Gestão proativa de validade de medicamentos.
-Projeto Integrador II — Tecnologia em Sistemas para Internet.
+Projeto Integrador II — Tecnologia em Sistemas para Internet. Aplicação React com API REST autenticada para gestão de medicamentos, lotes, alertas de validade, dashboard e dispensação FEFO.
 
-> **Sprint Goal (Sprint 1 / Entrega 2):** Disponibilizar as telas de Cadastro,
-> Consulta de Estoque e Alertas Visuais funcionando com dados simulados,
-> validando a experiência de uso antes da integração com o back-end.
+## Tecnologias
 
-## Stack
+### Front-end
+- React 19, Vite 8 e React Router 7;
+- CSS próprio com tokens visuais e componentes reutilizáveis;
+- cliente HTTP central em `src/services/api.js`, autenticação bearer e estados de carregamento/erro/vazio;
+- Vitest, jsdom e React Testing Library para testes de componentes.
 
-- **React 19** + **Vite** (dev server e build)
-- **React Router v7** (roteamento e proteção de rotas)
-- CSS puro com tokens (custom properties) — sem framework de UI
-- Tipografia: Space Grotesk (display), Inter (texto), JetBrains Mono (dados/lotes)
-- Camada de API mockada em `src/services/api.js`, com persistência em
-  `localStorage` para simular respostas assíncronas de um back-end real
+### Back-end
+- Python 3.11+, FastAPI e Uvicorn;
+- SQLAlchemy 2 e SQLite (configurável por `DATABASE_URL`);
+- Pydantic para validação de payloads;
+- JWT com expiração e hash de senhas Argon2;
+- pytest e HTTPX para testes automatizados.
 
-## Como rodar localmente
+SQLite foi escolhido para permitir executar o MVP localmente sem serviço adicional de banco. A camada ORM permite configurar outro banco suportado pelo SQLAlchemy para ambientes futuros.
+
+## Repositório e versão
+
+O repositório remoto já existente do grupo foi reaproveitado: [github.com/josielsilva10/FarmaViva](https://github.com/josielsilva10/FarmaViva). O trabalho desta entrega está na branch `feat/api-ui-sprint-2`; a integração front/back ocorre dentro do mesmo repositório, sem duplicar o projeto remoto.
+
+## Executar localmente
+
+1. API, em um terminal:
+
+```bash
+cd api
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
+pip install -r requirements.txt
+cp .env.example .env             # altere JWT_SECRET_KEY e senhas antes de uso externo
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+2. UI, em outro terminal, na raiz do repositório:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Acesse `http://localhost:5173`. A tela de login aceita qualquer e-mail/senha
-preenchidos (protótipo navegável — RF10/autenticação real fica para a Sprint 2).
+Abra `http://localhost:5173`. O Vite encaminha `/api` para `http://localhost:8000`. A documentação interativa está em `http://localhost:8000/docs`; a verificação de saúde em `/health`.
+
+Contas de demonstração criadas no primeiro start (senha padrão `FarmaViva123!`):
+- farmacêutica: `ana.farmaceutica@farmaviva.com.br`;
+- gestor: `gestor@farmaviva.local`;
+- auxiliar: `auxiliar@farmaviva.local`.
+
+**Essas credenciais e o segredo de desenvolvimento não são para produção.** Configure valores próprios no arquivo local `api/.env`, que não deve ser versionado. O banco demo `api/farmaviva.db` também fica fora do Git.
+
+## Testes e qualidade
 
 ```bash
-npm run build     # gera a build de produção em /dist
-npm run preview   # serve a build de produção localmente
+# Front-end (na raiz)
+npm test
+npm run lint
+npm run build
+
+# Back-end
+cd api
+.venv/bin/pytest -q
 ```
 
-## Estrutura de pastas
+## Organização principal
 
-```
+```text
+api/
+  app/             FastAPI, SQLAlchemy, schemas, autenticação e regras de domínio
+  tests/           testes de integração da API
 src/
-  components/     Sidebar, AppLayout, Modal, Toast, StatusBadge, Icon, etc.
-  context/        AuthContext (sessão do usuário)
-  data/           mockData.js — dados iniciais (medicamentos, lotes, thresholds)
-  pages/          Login, Dashboard, Estoque, Cadastro, Dispensacao
-  services/       api.js — única porta de entrada para dados (ver abaixo)
-  utils/          validade.js — cálculo de status (VERDE/AMARELO/VERMELHO/EXPIRADO)
+  components/      componentes compartilhados e teste de StatusBadge
+  context/         sessão do usuário e autenticação
+  pages/           login, dashboard, estoque, cadastro e dispensação
+  services/api.js  única camada HTTP consumida pelas telas
+  utils/           regras e apresentação de validade
 ```
 
-## Requisitos funcionais cobertos nesta entrega
+## Escopo implementado — Sprint 2
 
-| RF    | Descrição                                            | Tela                    |
-|-------|-------------------------------------------------------|--------------------------|
-| RF01  | Cadastrar, alterar e excluir medicamentos             | Cadastro                 |
-| RF02  | Consultar estoque com lotes e validades                | Estoque                  |
-| RF03  | Alertas visuais por cor (Verde/Amarelo/Vermelho)       | Estoque, Dashboard       |
-| RF04  | Dashboard com percentual por faixa de risco            | Dashboard                |
-| RF05  | Lógica FEFO na sugestão de lote de saída                | Dispensação               |
-| RF06  | Registrar saída de medicamentos                        | Dispensação               |
-| RF07  | Validar lote/validade no momento da dispensação         | Dispensação               |
-| RF08  | Alerta de bloqueio para lote vencido/próximo do vencimento | Dispensação (modal)   |
-| RF12  | Configurar thresholds dos alertas visuais               | Dashboard (modal)        |
+A API fornece autenticação, CRUD de medicamentos e lotes, busca/filtros por validade, configuração de thresholds, dashboard, relatório, auditoria e dispensação com validação server-side e FEFO. A interface consome a API real nas telas de login, estoque, cadastro, dashboard e dispensação; mantém feedback de carregamento, erro, vazio e sucesso.
 
-RF09 (relatórios), RF10 (API real) e RF11 (refinamento de UI) estão
-planejados para as próximas Sprints, conforme o Product Backlog.
-
-## De mock para back-end real
-
-Toda a aplicação conversa com os dados **exclusivamente** através de
-`src/services/api.js`. Quando a API REST (RF10) estiver disponível, basta
-substituir o corpo de cada função por uma chamada `fetch`, mantendo a mesma
-assinatura — nenhuma página ou componente precisa ser alterado. Exemplo:
-
-```js
-// antes (mock)
-export async function getMedicamentos() {
-  return delay(structuredClone(db.medicamentos));
-}
-
-// depois (API real)
-export async function getMedicamentos() {
-  const res = await fetch("/api/medicamentos");
-  if (!res.ok) throw new Error("Falha ao carregar medicamentos");
-  return res.json();
-}
-```
+Veja a matriz de tarefas/evidências em [`docs/artefatos-entrega-2.md`](docs/artefatos-entrega-2.md) e os detalhes de endpoints em [`api/README.md`](api/README.md).
 
 ## Equipe — Grupo 2 FarmaViva
 
